@@ -3,12 +3,16 @@ import Header from "@/components/Header";
 import CoinCard from "@/components/CoinCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, TrendingUp, Users, Clock } from "lucide-react";
+import { Sparkles, TrendingUp, Users, Clock, MessageCircle } from "lucide-react";
 import { fetchCoinData, type CoinData } from "@/services/coinGeckoApi";
+import { useSentimentData } from "@/hooks/useSentimentData";
 
 const Dashboard = () => {
   const [coins, setCoins] = useState<CoinData[]>([]);
   const [loading, setLoading] = useState(true);
+  const { sentimentData, loading: sentimentLoading } = useSentimentData(
+    coins.map(coin => coin.symbol)
+  );
 
   // Fetch real cryptocurrency data from CoinGecko API
   useEffect(() => {
@@ -74,6 +78,14 @@ const Dashboard = () => {
           
           <Card className="bg-gradient-card shadow-card">
             <CardContent className="p-6 text-center">
+              <MessageCircle className="w-8 h-8 text-accent mx-auto mb-2" />
+              <p className="text-2xl font-bold">AI-Powered</p>
+              <p className="text-sm text-muted-foreground">Sentiment Analysis</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-card shadow-card">
+            <CardContent className="p-6 text-center">
               <Clock className="w-8 h-8 text-crypto-orange mx-auto mb-2" />
               <p className="text-2xl font-bold">24/7</p>
               <p className="text-sm text-muted-foreground">Live Updates</p>
@@ -123,6 +135,7 @@ const Dashboard = () => {
                   price={coin.price}
                   change24h={coin.change24h}
                   icon={coin.icon}
+                  sentiment={sentimentData[coin.symbol]}
                 />
               ))
             )}

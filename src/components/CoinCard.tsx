@@ -2,6 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import SentimentIndicator from "./SentimentIndicator";
+import { type CoinSentiment } from "@/services/sentimentAnalysis";
 
 interface CoinCardProps {
   symbol: string;
@@ -9,9 +11,10 @@ interface CoinCardProps {
   price: number;
   change24h: number;
   icon: string;
+  sentiment?: CoinSentiment;
 }
 
-const CoinCard = ({ symbol, name, price, change24h, icon }: CoinCardProps) => {
+const CoinCard = ({ symbol, name, price, change24h, icon, sentiment }: CoinCardProps) => {
   const navigate = useNavigate();
   const isPositive = change24h >= 0;
 
@@ -44,6 +47,11 @@ const CoinCard = ({ symbol, name, price, change24h, icon }: CoinCardProps) => {
               {isPositive ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
               {Math.abs(change24h).toFixed(2)}%
             </Badge>
+            {sentiment && (
+              <div className="mt-2">
+                <SentimentIndicator sentiment={sentiment} compact />
+              </div>
+            )}
           </div>
         </div>
         <div className="h-1 bg-gradient-primary rounded-full group-hover:animate-pulse-glow"></div>
