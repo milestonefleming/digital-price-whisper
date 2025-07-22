@@ -6,14 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, Calendar, Target, ArrowLeft, Zap } from "lucide-react";
-
-interface CoinInfo {
-  symbol: string;
-  name: string;
-  icon: string;
-  price: number;
-  change24h: number;
-}
+import { fetchSingleCoinData, type CoinData } from "@/services/coinGeckoApi";
 
 interface PredictionData {
   period: string;
@@ -23,24 +16,40 @@ interface PredictionData {
   potentialReturn: number;
 }
 
-const coinData: Record<string, CoinInfo> = {
-  btc: { symbol: "BTC", name: "Bitcoin", icon: "₿", price: 45250.32, change24h: 2.45 },
-  eth: { symbol: "ETH", name: "Ethereum", icon: "Ξ", price: 2850.67, change24h: -1.23 },
-  doge: { symbol: "DOGE", name: "Dogecoin", icon: "Ð", price: 0.08, change24h: 5.67 }
-};
+const validCoins = ['btc', 'eth', 'doge'];
 
 const CoinPrediction = () => {
   const { coinId } = useParams();
+  const [coin, setCoin] = useState<CoinData | null>(null);
   const [predictions, setPredictions] = useState<PredictionData[]>([]);
   const [selectedTab, setSelectedTab] = useState("1d");
+  const [loading, setLoading] = useState(true);
 
-  if (!coinId || !coinData[coinId]) {
+  if (!coinId || !validCoins.includes(coinId)) {
     return <Navigate to="/" replace />;
   }
 
-  const coin = coinData[coinId];
+  useEffect(() => {
+    const loadCoinData = async () => {
+      setLoading(true);
+      const data = await fetchSingleCoinData(coinId!);
+      if (data) {
+        setCoin(data);
+      }
+      setLoading(false);
+    };
+
+    loadCoinData();
+    
+    // Update data every 60 seconds
+    const interval = setInterval(loadCoinData, 60000);
+
+    return () => clearInterval(interval);
+  }, [coinId]);
 
   useEffect(() => {
+    if (!coin) return;
+
     // Simulate AI predictions
     const generatePredictions = () => {
       const periods = ["1d", "3d", "7d"];
@@ -66,9 +75,35 @@ const CoinPrediction = () => {
     const interval = setInterval(generatePredictions, 30000); // Update every 30 seconds
 
     return () => clearInterval(interval);
-  }, [coin.price]);
+  }, [coin]);
 
   const currentPrediction = predictions.find(p => p.period === selectedTab);
+
+  if (loading || !coin) {
+    return (
+      <div className="min-h-screen bg-gradient-hero">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-10 bg-secondary rounded w-40 mb-6"></div>
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="w-20 h-20 bg-secondary rounded-2xl"></div>
+                <div>
+                  <div className="h-8 bg-secondary rounded w-32 mb-2"></div>
+                  <div className="h-4 bg-secondary rounded w-16"></div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="h-8 bg-secondary rounded w-32 mb-2"></div>
+                <div className="h-6 bg-secondary rounded w-20"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-hero">

@@ -4,33 +4,25 @@ import CoinCard from "@/components/CoinCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp, Users, Clock } from "lucide-react";
-
-interface CoinData {
-  symbol: string;
-  name: string;
-  price: number;
-  change24h: number;
-  icon: string;
-}
+import { fetchCoinData, type CoinData } from "@/services/coinGeckoApi";
 
 const Dashboard = () => {
-  const [coins, setCoins] = useState<CoinData[]>([
-    { symbol: "BTC", name: "Bitcoin", price: 45250.32, change24h: 2.45, icon: "₿" },
-    { symbol: "ETH", name: "Ethereum", price: 2850.67, change24h: -1.23, icon: "Ξ" },
-    { symbol: "DOGE", name: "Dogecoin", price: 0.08, change24h: 5.67, icon: "Ð" }
-  ]);
+  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Simulate real-time price updates
+  // Fetch real cryptocurrency data from CoinGecko API
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCoins(prevCoins => 
-        prevCoins.map(coin => ({
-          ...coin,
-          price: coin.price * (1 + (Math.random() - 0.5) * 0.02), // ±1% random change
-          change24h: coin.change24h + (Math.random() - 0.5) * 0.5
-        }))
-      );
-    }, 5000);
+    const loadCoinData = async () => {
+      setLoading(true);
+      const data = await fetchCoinData();
+      setCoins(data);
+      setLoading(false);
+    };
+
+    loadCoinData();
+    
+    // Update data every 60 seconds
+    const interval = setInterval(loadCoinData, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -100,16 +92,40 @@ const Dashboard = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {coins.map((coin) => (
-              <CoinCard
-                key={coin.symbol}
-                symbol={coin.symbol}
-                name={coin.name}
-                price={coin.price}
-                change24h={coin.change24h}
-                icon={coin.icon}
-              />
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, index) => (
+                <Card key={index} className="bg-gradient-card shadow-card animate-pulse">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-secondary rounded-full"></div>
+                        <div>
+                          <div className="h-4 bg-secondary rounded w-20 mb-2"></div>
+                          <div className="h-3 bg-secondary rounded w-12"></div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="h-6 bg-secondary rounded w-24 mb-2"></div>
+                        <div className="h-4 bg-secondary rounded w-16"></div>
+                      </div>
+                    </div>
+                    <div className="h-1 bg-secondary rounded-full"></div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              coins.map((coin) => (
+                <CoinCard
+                  key={coin.symbol}
+                  symbol={coin.symbol}
+                  name={coin.name}
+                  price={coin.price}
+                  change24h={coin.change24h}
+                  icon={coin.icon}
+                />
+              ))
+            )}
           </div>
         </div>
 
